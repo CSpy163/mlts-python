@@ -38,12 +38,10 @@ regex_array = [
     }, {
         "name": "小米相册",
         "regex": "^IMG_[[:digit:]]{8}_[[:digit:]]{6}"
-    },
-    {
+    }, {
         "name": "旧相册",
         "regex": "^IMG[[:digit:]]{14}$"
-    },
-    {
+    }, {
         "name": "微博",
         "regex": "^img-[[:alnum:]]{32}"
     }, {
@@ -64,21 +62,16 @@ regex_array = [
     }, {
         "name": "抖音缩略图",
         "regex": "^[[:alnum:]]{32}(tmp)?$"
-    },
-    {
+    }, {
         "name": "抖音分享码",
         "regex": "^share_card_[[:digit:]]{19}$"
-    },
-    {
+    }, {
         "name": "录屏缩略图",
         "regex": "^Screenrecorder\\-[[:digit:]]{4}\\-[[:digit:]]{2}\\-[[:digit:]]{2}"
-    },
-    {
+    }, {
         "name": "知乎",
         "regex": "^v2\\-[[:alnum:]]{32}(_r|_hd)?$"
-    },
-
-    {
+    }, {
         "name": "VID缩略图",
         "regex": "^VID_[[:digit:]]{8}_[[:digit:]]{6}"
     }, {
