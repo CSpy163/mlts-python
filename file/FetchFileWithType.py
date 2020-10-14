@@ -7,78 +7,68 @@ from shutil import rmtree
 import re
 import time
 
-image_inputs = ["/media/cspy/CSpy的数据盘", "/mnt/pc-e", "/mnt/pc-f", "/mnt/fs"]
-image_output = "/home/cspy/Images"
+skip_files =[]
+def pyCopy2(src, dest):
+    try:
+        print("复制中 {} -> {}".format(src, dest))
+        copy2(src, dest)
+    except OSError as os_error:
+        if os_error.errno == 36:
+            print("文件名过长，已跳过: {}".format(src))
+            skip_files.append(src)
 
-"""
-mode: simple/tradition
-    simple: 简易模式
-        介绍：文件变动只发生在最后一步，即将文件从inputs复制到output中，不存在其他文件变更操作。
-        优点：节省空间；减少硬盘操作次数；
-        缺点：如果读取的是网络存储，则受网络性能，远程硬盘性能影响较大；
-    tradition: 传统模式
-        介绍：将需要操作的文件，复制到同一目录，方便操作。重复文件保存在各个重复文件夹中，一目了然。
+def tradition_mode(file_inputs: list, file_output: str, mime_type_prefix: str, save_duplicate=False):
+    """
+    传统模式：将需要操作的文件，复制到同一目录，方便操作。重复文件保存在各个重复文件夹中，一目了然。
         优点：脚本的各个流程及结果一目了然，方便调试；可以选择保留重复文件，容错率较高；
         缺点：占用空间大，读写频繁；
-"""
-mode = "simple"
-
-"""
-是否保留重复文件夹（仅在mode=tradition模式下生效）
-"""
-save_duplicate = False
-
-#  判断输出目录
-if os.path.exists(image_output):
-    print("Err: 输出目录已存在！")
-    exit(-1)
-else:
-    os.mkdir(image_output)
-
-
-def tradition_mode(save_duplicate):
-    """传统模式"""
+    :param file_inputs: 文件输入目录
+    :param file_output: 文件输出目录
+    :param mime_type_prefix: mime类型前缀
+    :param save_duplicate: 是否保存重复文件
+    :return: None
+    """
     # 创建临时文件夹
     tmp_dir_suffix = str(time.time()).split(".")[1]
-    image_tmp = os.path.join(os.path.dirname(image_output), tmp_dir_suffix)
-    while os.path.exists(image_tmp):
-        print("Err:  临时文件夹已存在: {}".format(image_tmp))
-        image_tmp = os.path.join(os.path.dirname(image_output), tmp_dir_suffix)
-    os.makedirs(image_tmp)
-    print("创建临时文件夹: {}".format(image_tmp))
+    file_tmp = os.path.join(os.path.dirname(file_output), tmp_dir_suffix)
+    while os.path.exists(file_tmp):
+        print("Err:  临时文件夹已存在: {}".format(file_tmp))
+        file_tmp = os.path.join(os.path.dirname(file_output), tmp_dir_suffix)
+    os.makedirs(file_tmp)
+    print("创建临时文件夹: {}".format(file_tmp))
 
     # 在临时文件夹中，创建两个重复文件夹
-    duplicate_md5_dir = os.path.join(image_tmp, "duplicate_md5")
+    duplicate_md5_dir = os.path.join(file_tmp, "duplicate_md5")
     os.makedirs(duplicate_md5_dir)
-    duplicate_name_dir = os.path.join(image_tmp, "duplicate_name")
+    duplicate_name_dir = os.path.join(file_tmp, "duplicate_name")
     os.makedirs(duplicate_name_dir)
 
-    print("抓取图片")
+    print("抓取文件")
 
-    # 抓取的图片总数
+    # 抓取的文件总数
     sum = 0
 
-    # 结果集，各个文件內包含的图片数量
+    # 结果集，各个文件內包含的文件数量
     result_list = []
 
     # md5字典
     # file_md5 -> file_names
     md5_dict = {}
 
-    for image_input in image_inputs:
-        for root, dirs, files in os.walk(image_input):
+    for file_input in file_inputs:
+        for root, dirs, files in os.walk(file_input):
             # 获取当前路径md5
             dir_md5 = hashlib.md5(root.encode())
-            image_count = 0
+            file_count = 0
             for file in files:
                 # 获取源文件路径
                 src_file = os.path.join(root, file)
                 src_file_type = magic.from_file(src_file, mime=True)
-                # 判断是图片，则复制
-                if src_file_type.startswith("image/"):
+                # 判断是文件，则复制
+                if src_file_type.startswith(mime_type_prefix):
                     # 获取目标路径和文件名
-                    dest_file = os.path.join(image_output, dir_md5.hexdigest() + "_" + file)
-                    # 确定是图片之后，直接计算md5
+                    dest_file = os.path.join(file_output, dir_md5.hexdigest() + "_" + file)
+                    # 确定是文件之后，直接计算md5
                     print("读取文件：\t{}".format(src_file))
                     src_file_opener = open(src_file, "rb")
                     src_file_content = src_file_opener.read()
@@ -88,17 +78,16 @@ def tradition_mode(save_duplicate):
                     else:
                         md5_dict[file_md5] = [dest_file]
                     src_file_opener.close()
-                    image_count += 1
-                    copy2(src_file, dest_file)
-                    print(src_file + " -> " + dest_file)
-            result_list.append("root: {}\t\timages: {}".format(root, image_count))
-            sum += image_count
+                    file_count += 1
+                    pyCopy2(src_file, dest_file)
+            result_list.append("root: {}\t\tfiles: {}".format(root, file_count))
+            sum += file_count
 
     # 打印结果集
     for result in result_list:
         print(result)
-    print("抓取图片结束")
-    print("共抓取{}张图片".format(sum))
+    print("抓取文件结束")
+    print("共抓取{}张文件".format(sum))
 
     print("去重（md5）")
     duplicate_name_dir_count = 0
@@ -127,14 +116,14 @@ def tradition_mode(save_duplicate):
         if len(files) > 1:
             # 字符串数组排序，按照字符串大小排序，尽量使用同一个文件夹中的文件版本
             files.sort()
-            copy2(os.path.join(root, files[0]), image_output)
+            pyCopy2(os.path.join(root, files[0]), file_output)
             merge_count += 1
     print("合并结束\t移动: {}".format(merge_count))
 
     print("二次去重（文件名）")
     name_dict = {}
     duplicate_name_count = 0
-    for root, dirs, files in os.walk(image_output):
+    for root, dirs, files in os.walk(file_output):
         for file in files:
             # 获取无前缀的原始文件名，加入字典
             original_file_name = re.sub("^[0-9a-f]{32}_", "", file, 1)
@@ -154,7 +143,7 @@ def tradition_mode(save_duplicate):
                 continue
             # 将文件名重复的文件，移入duplicate_name_dir
             for file in name_dict[key]:
-                move(os.path.join(image_output, file), dir_name)
+                move(os.path.join(file_output, file), dir_name)
                 duplicate_name_count += 1
     print("二次去重结束\t共: {}".format(duplicate_name_count))
 
@@ -167,13 +156,13 @@ def tradition_mode(save_duplicate):
             random_suffix = str(time.time()).split(".")[1]
             new_file_name = file_name_array[0] + "_" + random_suffix + file_name_array[1]
             rename_count += 1
-            copy2(os.path.join(root, file), os.path.join(image_output, new_file_name))
+            pyCopy2(os.path.join(root, file), os.path.join(file_output, new_file_name))
     print("重名文件重命名结束\t共: {}".format(rename_count))
 
     print("去除output前缀")
     # 去除前缀
     remove_prefix_count = 0
-    for root, dirs, files in os.walk(image_output):
+    for root, dirs, files in os.walk(file_output):
         for file in files:
             remove_prefix_count += 1
             new_file_name = re.sub("^[0-9a-f]{32}_", "", file, 1)
@@ -181,54 +170,62 @@ def tradition_mode(save_duplicate):
     print("去除output前缀结束\t共: {}".format(remove_prefix_count))
 
     if not save_duplicate:
-        print("删除临时文件夹\t\t{}".format(image_tmp))
-        rmtree(image_tmp)
+        print("删除临时文件夹\t\t{}".format(file_tmp))
+        rmtree(file_tmp)
         print("临时文件夹删除成功")
     else:
-        print("保留临时文件夹\t\t{}".format(image_tmp))
+        print("保留临时文件夹\t\t{}".format(file_tmp))
     print("Finished.")
 
 
-def simple_mode():
-    """简单模式"""
-    # 抓取的图片总数
+def simple_mode(file_inputs, file_output, mime_type_prefix):
+    """
+    简单模式：文件变动只发生在最后一步，即将文件从inputs复制到output中，不存在其他文件变更操作。
+        优点：节省空间；减少硬盘操作次数；
+        缺点：如果读取的是网络存储，则受网络性能，远程硬盘性能影响较大；
+    :param file_inputs: 文件输入目录
+    :param file_output: 文件输出目录
+    :param mime_type_prefix: mime类型前缀
+    :return: None
+    """
+    # 抓取的文件总数
     sum = 0
 
-    # 结果集，各个文件內包含的图片数量
+    # 结果集，各个文件內包含的文件数量
     result_list = []
 
     # md5字典
     # file_md5 -> file_names
     md5_dict = {}
 
-    for image_input in image_inputs:
-        for root, dirs, files in os.walk(image_input):
-            image_count = 0
+    for file_input in file_inputs:
+        for root, dirs, files in os.walk(file_input):
+            file_count = 0
             for file in files:
                 # 获取源文件路径
                 src_file = os.path.join(root, file)
                 src_file_type = magic.from_file(src_file, mime=True)
-                # 判断是图片，则记录到md5_dict
-                if src_file_type.startswith("image/"):
-                    # 确定是图片之后，直接计算md5
+                # 判断是该类型文件，则记录到md5_dict
+                if src_file_type.startswith(mime_type_prefix):
+                    # 确定是该类型文件之后，直接计算md5
                     src_file_opener = open(src_file, "rb")
                     src_file_content = src_file_opener.read()
                     file_md5 = hashlib.md5(src_file_content).hexdigest()
-                    print("Find image: {}".format(src_file))
+                    print("Find file: {}".format(src_file))
                     if file_md5 in md5_dict.keys():
                         md5_dict[file_md5].append(src_file)
                     else:
                         md5_dict[file_md5] = [src_file]
                     src_file_opener.close()
-                    image_count += 1
-            result_list.append("root: {}\t\timages: {}".format(root, image_count))
-            sum += image_count
+                    file_count += 1
+            result_list.append("root: {}\t\tfiles: {}".format(root, file_count))
+            sum += file_count
 
     # 打印结果集
     for result in result_list:
         print(result)
-    print("抓取图片结束")
-    print("共抓取{}张图片".format(sum))
+    print("抓取文件结束")
+    print("共抓取{}个文件".format(sum))
 
     print("去重（md5）")
     # 目前所有的文件信息都保存在md5_dict中
@@ -259,22 +256,41 @@ def simple_mode():
                 file_name = os.path.basename(file_path)
                 file_name_array = os.path.splitext(file_name)
                 random_suffix = str(time.time()).split(".")[1]
-                new_file = os.path.join(image_output, file_name_array[0] + "_" + random_suffix + file_name_array[1])
-                copy2(file_path, new_file)
+                new_file = os.path.join(file_output, file_name_array[0] + "_" + random_suffix + file_name_array[1])
+                pyCopy2(file_path, new_file)
                 duplicate_name_count += 1
         else:
-            copy2(name_dict[key][0], image_output)
+            pyCopy2(name_dict[key][0], file_output)
             duplicate_name_count += 1
     print("文件重命名结束\t共{}".format(duplicate_name_count))
     print("Finished.")
 
 
-begin_timestamp = time.time()
-if mode == "tradition":
-    tradition_mode(save_duplicate)
-elif mode == "simple":
-    simple_mode()
-else:
-    print("请设置mode参数")
-end_timestamp = time.time()
-print("运行时间: {} 秒".format(end_timestamp - begin_timestamp))
+def fetch_file(mode: str, file_inputs: list, file_output: str, mime_type_prefix: str, save_duplicate=False):
+    if "" == mime_type_prefix:
+        print("无效mime类型")
+        exit(-1)
+
+    #  判断输出目录
+    if os.path.exists(file_output):
+        print("Err: 输出目录已存在！")
+        exit(-1)
+    else:
+        os.mkdir(file_output)
+
+    begin_timestamp = time.time()
+    if mode == "tradition":
+        tradition_mode(file_inputs, file_output, mime_type_prefix, save_duplicate)
+    elif mode == "simple":
+        simple_mode(file_inputs, file_output, mime_type_prefix)
+    else:
+        print("请设置mode参数")
+    end_timestamp = time.time()
+    print("运行时间: {} 秒".format(end_timestamp - begin_timestamp))
+    if len(skip_files) != 0:
+        print("跳过的文件列表: ")
+        for skip_file in skip_files:
+            print("File name: {}".format(skip_file))
+    else:
+        print("未跳过文件")
+
