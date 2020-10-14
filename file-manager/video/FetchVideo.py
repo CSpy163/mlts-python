@@ -1,4 +1,4 @@
-from file.FetchFileWithType import fetch_file
+from common.FetchFileWithType import fetch_file
 
 # 视频输入目录
 video_inputs = ["/media/cspy/CSpy的数据盘", "/mnt/pc-e", "/mnt/pc-f", "/mnt/fs"]

@@ -1,4 +1,4 @@
-from file.ClassifyFileByName import classify_file
+from common.ClassifyFileByName import classify_file
 # 视频输入目录
 video_src = "/home/cspy/test_video_1810"
 # 视频输出目录

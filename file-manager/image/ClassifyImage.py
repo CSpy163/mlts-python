@@ -1,4 +1,4 @@
-from file.ClassifyFileByName import classify_file
+from common.ClassifyFileByName import classify_file
 # 图片输入目录
 image_src = "/home/cspy/test_image_1810"
 # 图片输出目录

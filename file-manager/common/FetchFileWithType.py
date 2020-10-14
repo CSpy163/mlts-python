@@ -103,11 +103,11 @@ def tradition_mode(file_inputs: list, file_output: str, mime_type_prefix: str, s
                 print(dir_name + "是一个文件！")
                 continue
             duplicate_name_dir_count += 1
-            # 将md5重复的所有文件，都移入 duplicate_md5_dir/md5(file)/
+            # 将md5重复的所有文件，都移入 duplicate_md5_dir/md5(common)/
             for src in md5_dict[key]:
                 move(src, dir_name)
                 duplicate_name_file_count += 1
-    print("去重结束\tmd5: {}\tfile: {}".format(duplicate_name_dir_count, duplicate_name_file_count))
+    print("去重结束\tmd5: {}\tcommon: {}".format(duplicate_name_dir_count, duplicate_name_file_count))
 
     print("合并")
     # 将md5重复的文件，取名称最短的文件，复制到output
@@ -211,7 +211,7 @@ def simple_mode(file_inputs, file_output, mime_type_prefix):
                     src_file_opener = open(src_file, "rb")
                     src_file_content = src_file_opener.read()
                     file_md5 = hashlib.md5(src_file_content).hexdigest()
-                    print("Find file: {}".format(src_file))
+                    print("Find common: {}".format(src_file))
                     if file_md5 in md5_dict.keys():
                         md5_dict[file_md5].append(src_file)
                     else:
