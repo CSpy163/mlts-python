@@ -1,4 +1,4 @@
-from common.FetchFileWithType import fetch_file
+from file_manager.common.FetchFileWithType import fetch_file
 
 # 图片输入目录
 image_inputs = ["/media/cspy/CSpy的数据盘", "/mnt/pc-e", "/mnt/pc-f", "/mnt/fs"]

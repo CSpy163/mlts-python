@@ -1,4 +1,4 @@
-from common.ClassifyFileByName import classify_file
+from file_manager.common.ClassifyFileByName import classify_file
 # 视频输入目录
 video_src = "/home/cspy/test_video_1810"
 # 视频输出目录
@@ -11,7 +11,7 @@ regex_array = [
     }, {
         "name": "录屏",
         "regex": "^VID_[[:digit:]]{8}_[[:digit:]]{6}"
-    }
+    }, {}
 ]
 # 开始分类
 classify_file(video_src, video_dest, regex_array, "video/")
