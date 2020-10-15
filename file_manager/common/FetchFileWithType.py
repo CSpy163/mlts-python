@@ -127,6 +127,9 @@ def tradition_mode(file_inputs: list, file_output: str, mime_type_prefix: str, s
         for file in files:
             # 获取无前缀的原始文件名，加入字典
             original_file_name = re.sub("^[0-9a-f]{32}_", "", file, 1)
+            # 在某些系统上，后缀名忽略大小写；这里将后缀统一为小写
+            file_name_array = os.path.splitext(original_file_name)
+            original_file_name = file_name_array[0] + file_name_array[1].lower()
             if original_file_name in name_dict.keys():
                 name_dict[original_file_name].append(file)
             else:
@@ -242,6 +245,9 @@ def simple_mode(file_inputs, file_output, mime_type_prefix):
     name_dict = {}
     for file_path in file_list:
         file_name = os.path.basename(file_path)
+        # 在某些系统上，后缀名忽略大小写；这里将后缀统一为小写
+        file_name_array = os.path.splitext(file_name)
+        file_name = file_name_array[0] + file_name_array[1].lower()
         if file_name in name_dict.keys():
             name_dict[file_name].append(file_path)
         else:

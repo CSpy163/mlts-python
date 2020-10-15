@@ -1,8 +1,8 @@
 from file_manager.common.ClassifyFileByName import classify_file
 # 图片输入目录
-image_src = "/home/cspy/test_image_1810"
+image_src = "/home/cspy/Image"
 # 图片输出目录
-image_dest = "/home/cspy/image_test_1819"
+image_dest = "/home/cspy/PyBackupImage"
 # 正则表达式数组
 regex_array = [
     {
